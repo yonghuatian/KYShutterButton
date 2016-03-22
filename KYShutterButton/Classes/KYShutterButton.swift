@@ -78,14 +78,6 @@ public class KYShutterButton: UIButton {
     }
     
     @objc
-    @IBInspectable public var rotateAnimateDuration: Float = 5 {
-        didSet {
-            _recordingRotateAnimation.duration = NSTimeInterval(rotateAnimateDuration)
-            _recordingAnimation.duration       = NSTimeInterval(rotateAnimateDuration*2)
-        }
-    }
-    
-    @objc
     public var buttonState: ButtonState = .Normal {
         didSet {
             let animation = CABasicAnimation(keyPath: "path")
@@ -101,6 +93,16 @@ public class KYShutterButton: UIButton {
                 animation.toValue = _circlePath.CGPath
                 _circleLayer.addAnimation(animation, forKey: "path-anim")
                 _circleLayer.path = _circlePath.CGPath
+                
+                if let textLayer = self.titleLabel?.layer {
+                    let fade = CABasicAnimation(keyPath: "opacity")
+                    fade.fromValue = textLayer.opacity
+                    fade.toValue = 1
+                    fade.duration = 0.15
+                    textLayer.addAnimation(fade, forKey: "opacity-anim")
+                    textLayer.opacity = 1
+                }
+                
             case .Recording:
                 animation.toValue = _roundRectPath.CGPath
                 _circleLayer.addAnimation(animation, forKey: "path-anim")
@@ -112,6 +114,16 @@ public class KYShutterButton: UIButton {
                     _rotateLayer.addAnimation(_recordingRotateAnimation, forKey: "recordingRotate-anim")
                     _progressLayer.path = p_arcPathWithProgress(1.0).CGPath
                 }
+                
+                if let textLayer = self.titleLabel?.layer {
+                    let fade = CABasicAnimation(keyPath: "opacity")
+                    fade.fromValue = textLayer.opacity
+                    fade.toValue = 0
+                    fade.duration = 0.15
+                    textLayer.addAnimation(fade, forKey: "opacity-anim")
+                    textLayer.opacity = 0
+                }
+                
             }
         }
     }
@@ -240,7 +252,7 @@ public class KYShutterButton: UIButton {
             paths.append(self.p_arcPathWithProgress(animationProgress, clockwise: false).CGPath)
         }
         let animation         = CAKeyframeAnimation(keyPath: "path")
-        animation.duration    = NSTimeInterval(rotateAnimateDuration*2)
+        animation.duration    = 10
         animation.values      = paths
         animation.beginTime   = CACurrentMediaTime() + _kstartAnimateDuration
         animation.repeatCount = Float.infinity
@@ -252,7 +264,7 @@ public class KYShutterButton: UIButton {
         let animation         = CABasicAnimation(keyPath: "transform.rotation")
         animation.fromValue   = 0
         animation.toValue     = CGFloat(M_PI*2.0)
-        animation.duration    = NSTimeInterval(rotateAnimateDuration)
+        animation.duration    = 5
         animation.repeatCount = Float.infinity
         animation.beginTime   = CACurrentMediaTime() + _kstartAnimateDuration
         return animation
@@ -296,11 +308,15 @@ public class KYShutterButton: UIButton {
         if _circleLayer.superlayer != layer {
             layer.addSublayer(_circleLayer)
         }
+        
+        if let label = self.titleLabel {
+            self.bringSubviewToFront(label)
+        }
     }
     
     @objc
     public override func setTitle(title: String?, forState state: UIControlState) {
-        super.setTitle("", forState: state)
+        super.setTitle(title, forState: state)
     }
     
     /**************************************************************************/
